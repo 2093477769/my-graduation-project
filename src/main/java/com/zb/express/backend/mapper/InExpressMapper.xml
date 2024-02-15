@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.backend.mapper.InExpressMapper">
+    <insert id="insertInExpress">
+        insert into in_express (company_id, img, sender_name, sender_phone, sender_address, receiver_name,
+                                receiver_phone, receiver_address, status, create_time)
+        values (#{companyId}, #{img}, #{senderName}, #{senderPhone}, #{senderAddress}, #{receiverName},
+                #{receiverPhone}, #{receiverAddress}, #{status}, #{createTime})
+    </insert>
+    <update id="updateInExpressStatusById">
+        update in_express
+        set status         = #{status}
+            <if test="deliverymanId!=null and deliverymanId!=''">
+                deliveryman_id = #{deliverymanId}
+            </if>
+        where id = #{id}
+    </update>
+    <update id="updateInExpress">
+        update in_express
+        set company_id = #{companyId},
+        <if test="img!=null">img = #{img},</if>
+        sender_name = #{senderName},
+        sender_phone = #{senderPhone},
+        sender_address = #{senderAddress},
+        receiver_name = #{receiverName},
+        receiver_phone = #{receiverPhone},
+        receiver_address = #{receiverAddress},
+        create_time = #{createTime},
+        update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteInExpressById">
+        delete
+        from in_express
+        where id = #{id}
+    </delete>
+
+
+    <select id="selectInExpressPage" resultType="java.util.Map">
+        select e.id as id, ec.name as companyName ,e.img as img , e.sender_name as senderName, e.sender_phone as
+        senderPhone,
+        e.receiver_name as receiverName, e.receiver_phone as receiverPhone, e.status as status
+        from in_express e
+        left join express_company ec on ec.id = e.company_id
+        <where>
+            <if test="sender != null and sender != ''">
+                AND e.sender_name like concat('%', #{sender}, '%') OR e.sender_phone like concat('%', #{sender}, '%')
+            </if>
+            <if test="receiver != null and receiver != ''">
+                AND e.receiver_name like concat('%', #{receiver}, '%') OR e.receiver_phone like concat('%', #{receiver},
+                '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND e.status = #{status}
+            </if>
+        </where>
+        ORDER BY e.create_time DESC
+    </select>
+    <select id="selectInExpressById" resultType="java.util.Map">
+        select e.img              as img,
+               e.sender_name      as senderName,
+               e.sender_phone     as senderPhone,
+               e.sender_address   as senderAddress,
+               e.receiver_name    as receiverName,
+               e.receiver_phone   as receiverPhone,
+               e.receiver_address as receiverAddress,
+               e.status           as status,
+               e.create_time      as createTime,
+               e.update_time      as updateTime,
+               ec.name            as companyName,
+               d.name             as deliverymanName,
+               d.phone            as deliverymanPhone
+        from in_express e
+                 left join express_company ec on ec.id = e.company_id
+                 left join deliveryman d on e.deliveryman_id = d.id
+        where e.id = #{id}
+    </select>
+    <select id="selectInExpress" resultType="com.zb.express.pojo.InExpress">
+        select id,
+               company_id,
+               img,
+               sender_name,
+               sender_phone,
+               sender_address,
+               receiver_name,
+               receiver_phone,
+               receiver_address,
+               status,
+               deliveryman_id,
+               create_time,
+               update_time
+        from in_express
+        where id = #{id}
+    </select>
+    <select id="selectInExpressCount" resultType="java.lang.Integer">
+        select count(*)
+        from in_express
+        where company_id = #{id}
+           OR deliveryman_id = #{id}
+    </select>
+    <select id="selectInExpressStatusById" resultType="java.lang.Integer">
+        select status from in_express where id=#{id}
+    </select>
+</mapper>

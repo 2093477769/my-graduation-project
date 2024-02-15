@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.backend.mapper.ExpressCompanyMapper">
+    <insert id="insertCompany">
+        insert into express_company (name, base_fee, weight_fee, create_time)
+        values (#{name}, #{baseFee}, #{weightFee}, #{createTime})
+    </insert>
+    <update id="upadteCompany">
+        UPDATE express_company
+        <set>
+            <if test="name != null and name != ''">
+                name=#{name},
+            </if>
+            <if test="baseFee != null">
+                base_fee=#{baseFee},
+            </if>
+            <if test="weightFee != null">
+                weight_fee=#{weightFee},
+            </if>
+            <if test="updateTime != null and updateTime != ''">
+                update_time=#{updateTime},
+            </if>
+        </set>
+        WHERE id=#{id}
+    </update>
+    <delete id="deleteCompanyById">
+        delete from express_company where id = #{id}
+    </delete>
+
+
+    <select id="selectAllCompany" resultType="com.zb.express.pojo.ExpressCompany">
+        select id, name, base_fee, weight_fee, create_time, update_time
+        from express_company
+        order by create_time desc
+
+    </select>
+
+    <select id="selectCompanyById" resultType="com.zb.express.pojo.ExpressCompany">
+        select id, name, base_fee, weight_fee, create_time, update_time from express_company where id=#{id};
+    </select>
+    <select id="selectCompanyByName" resultType="com.zb.express.pojo.ExpressCompany">
+        select id, name, base_fee, weight_fee, create_time, update_time from express_company where name=#{name}
+    </select>
+</mapper>

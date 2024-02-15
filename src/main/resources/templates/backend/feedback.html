@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Demo</title>-->
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet">
+    <script th:src="@{/layui/layui.js}"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .layui-table td, .layui-table th {
+            text-align: center;
+        }
+
+        /* 输入框样式 */
+        .input {
+            height: 32px;
+            line-height: 32px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        /* 下拉菜单样式 */
+        select {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* 按钮样式 */
+        .layui-btn {
+            height: 34px;
+            line-height: 34px;
+            margin-left: 10px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .title-border {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+
+<h1>投诉与建议管理</h1>
+
+<div class="layui-row layui-col-space20" style="width: 80%; margin: 0 auto;">
+    <div class="title-border">
+        <input type="text" id="queryUsername" class="input" placeholder="请输入用户名">
+
+        <select id="queryStatus" lay-search>
+            <option value="">状态</option>
+            <option value="0">未处理</option>
+            <option value="1">已处理</option>
+        </select>
+        <button type="button" id="queryBtn" class="layui-btn layui-bg-blue">查询</button>
+    </div>
+
+    <table class="layui-table">
+        <colgroup>
+            <col width="10%">
+            <col width="15%">
+            <col width="12%">
+            <col width="40%">
+            <col width="25%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>用户名</th>
+            <th>状态</th>
+            <th>投诉/建议</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="tBody">
+        </tbody>
+    </table>
+    <div id="page"></div>
+</div>
+
+<div id="get-feedback-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="feedbackDetailFrom">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="username" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-block">
+                        <select name="status" lay-search disabled>
+                            <option value="0">未处理</option>
+                            <option value="1">已处理</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">创建时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="createTime" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">处理时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="updateTime" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">投诉或建议</label>
+                <div class="layui-input-block">
+                    <textarea name="content" class="layui-textarea" placeholder="请输入内容" disabled></textarea>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    layui.use(function () {
+        var layer = layui.layer;
+        var $ = layui.$;
+        var laypage = layui.laypage;
+        let form = layui.form;
+
+        $(document).on('click', '.handleBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: '/backend/feedback/handleFeedback',
+                data: {
+                    id: id
+                },
+                type: 'Post',
+                dataType: 'json',
+                success: function (data) {
+                    if (data.flag) {
+                            layer.msg(data.message, {icon: 6, anim: 0});
+                            queryForPage()
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+            })
+        });
+
+        $(document).on('click', '.deleteBtn', function () {
+            let id = $(this).attr("id")
+            layer.confirm('确认删除吗?', {icon: 3}, function () {
+                $.ajax({
+                    url: '/backend/feedback/deleteFeedback',
+                    data: {
+                        id: id
+                    },
+                    type: 'Post',
+                    dataType: 'json',
+                    success: function (data) {
+
+                            if (data.flag) {
+                                layer.msg(data.message, {icon: 6, anim: 0});
+                                let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                if (pageNo > 1) {
+                                    queryForPage(pageNo, pageSize);
+                                } else {
+                                    if ($('.layui-table tbody tr').length === 1) {
+                                        pageNo--;
+                                    }
+                                    if (pageNo > 0) {
+                                        queryForPage(pageNo, pageSize);
+                                    }
+                                }
+                            } else {
+                                layer.msg(data.message, {icon: 5, anim: 6});
+                            }
+                        }
+                })
+            },function (){
+            });
+        });
+
+        $(document).on('click', '.detailBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: '/backend/feedback/detailFeedback',
+                data: {
+                    id: id
+                },
+                type: 'Post',
+                dataType: 'json',
+                success: function (data) {
+                        if (data.flag) {
+                            let feedback = data.data;
+                            form.val('feedbackDetailFrom', {
+                                'username': feedback.username,
+                                'status':feedback.status,
+                                'createTime':feedback.createTime,
+                                'updateTime':feedback.updateTime,
+                                "content":feedback.content
+                            });
+                            layer.open({
+                                type: 1,
+                                title: '投诉或建议详情',
+                                area: ['730px', '350px'],
+                                content: $('#get-feedback-modal')
+                            });
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+
+            })
+        });
+
+        $("#queryBtn").on('click', function () {
+
+            queryForPage(1,10)
+        })
+
+        queryForPage(1,10)
+
+        function queryForPage(pageNo,pageSize) {
+            let username = $("#queryUsername").val();
+            let status = $("#queryStatus").val();
+            $.ajax({
+                url: '/backend/feedback/queryFeedbackForPage',
+                data: {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                    username: username,
+                    status: status
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var htmlStr = "";
+                    $.each(data.rows, function (index, feedback) {
+                        let status = feedback.status == 0 ? "未处理" : "已处理"
+                        htmlStr += "<tr>" +
+                            "<td>" + (index + 1) + "</td>" +
+                            "            <td >" + feedback.username + "</td>" +
+                            "            <td >" + status + "</td>" +
+                            "            <td >" + feedback.content + "</td>" +
+                            "            <td ><button type='button' id='" + feedback.id + "' class='detailBtn layui-btn'>详情</button>" +
+                            "<button type='button' id='" + feedback.id + "' class='deleteBtn layui-btn layui-bg-red'>删除</button> ";
+                        if (feedback.status == 0) {
+                            htmlStr += "<button type='button'  id='" + feedback.id + "' class='handleBtn layui-btn layui-bg-blue'>处理</button></td>" +
+                                "        </tr>";
+                        } else {
+                            htmlStr += "<button type='button'  id='" + feedback.id + "' class='layui-btn layui-btn-disabled'>已处理</button></td>" +
+                                "        </tr>";
+                        }
+                    });
+                    $("#tBody").html(htmlStr)
+
+
+                    laypage.render({
+                        elem: 'page',
+                        count: data.total,
+                        limit: pageSize,
+                        curr: pageNo,
+                        layout: ['count', 'prev', 'page', 'next', 'limit'], // 功能布局
+                        jump: function (obj, first) {
+                            if (!first) {
+                                pageNo = obj.curr;
+                                pageSize=obj.limit;
+                                queryForPage(pageNo, pageSize); // 分页改变时重新查询并保持在当前页面
+                            }
+                        }
+                    })
+                }
+            })
+
+        }
+    })
+
+
+</script>
+</body>
+</html>

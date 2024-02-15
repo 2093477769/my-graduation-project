@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.FeedbackMapper">
+    <insert id="insertFeedback">
+        insert into feedback(user_id, content, status, create_time) values (#{userId},#{content},#{status},#{createTime})
+    </insert>
+
+    <update id="updateFeedback">
+        update feedback set content=#{content} where id=#{id}
+    </update>
+    <select id="selectFeedbackForPageToFront" resultType="java.util.Map">
+        select * from feedback where user_id=#{userId}
+        <if test="status != bull and status!=''">
+            AND status = #{status}
+        </if>
+    </select>
+    <select id="selectFeedBackByIdToFront" resultType="com.zb.express.pojo.Feedback">
+        select * from feedback where id=#{id}
+    </select>
+
+</mapper>

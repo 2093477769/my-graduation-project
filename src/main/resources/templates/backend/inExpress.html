@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Demo</title>
+
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet">
+    <script th:src="@{/layui/layui.js}"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .layui-table td, .layui-table th {
+            text-align: center;
+        }
+
+        /* 输入框样式 */
+        .input {
+            height: 32px;
+            line-height: 32px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        /* 下拉菜单样式 */
+        select {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* 按钮样式 */
+        .layui-btn {
+            height: 34px;
+            line-height: 34px;
+            margin-left: 10px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .title-border {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<h1>寄入快递管理</h1>
+<div class="layui-row layui-col-space20" style="width: 90%; margin: 0 auto;">
+    <div class="title-border">
+        <input type="text" id="querySender" class="input" placeholder="请输入寄件人姓名/手机号">
+        <input type="text" id="queryReceiver" class="input" placeholder="请输入收件人姓名/手机号">
+        <select id="queryStatus" lay-search>
+            <option value="">状态</option>
+            <option value="0">已入库</option>
+            <option value="1">正在配送</option>
+            <option value="2">已取件</option>
+        </select>
+        <button type="button" id="queryBtn" class="layui-btn layui-bg-blue">查询</button>
+    </div>
+    <button type="button" id="addInExpress" class="layui-btn">新增快递</button>
+    <table class="layui-table">
+        <colgroup>
+            <col width="9%">
+            <col width="9%">
+            <col width="9%">
+            <col width="9%">
+            <col width="12%">
+            <col width="9%">
+            <col width="12%">
+            <col width="8">
+            <col width="23%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>图片</th>
+            <th>快递公司</th>
+            <th>寄件人</th>
+            <th>寄件人手机号</th>
+            <th>收件人</th>
+            <th>收件人手机号</th>
+            <th>状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="tBody">
+        </tbody>
+    </table>
+    <div id="page"></div>
+</div>
+
+<div id="add-inExpress-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="addInExpressForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">快递公司</label>
+                <div class="layui-input-inline">
+                    <select name="companyId" lay-verify="required" lay-search>
+                        <option value="">请选择快递公司</option>
+                        <option th:each="company:${expressCompanyList}" th:value="${company.id}"
+                                th:text="${company.name}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">图片</label>
+                    <div class="layui-input-inline">
+                        <div class="layui-upload" style="text-align: center;">
+                            <div class="layui-form-mid layui-word-aux" id="selectedFilePreview"
+                                 style="text-align: center; width: 100%"></div> <!-- 显示图片 -->
+                            <div>
+                                <button type="button" class="layui-btn" id="chooseImage">选择图片</button>
+                                <input type="file" name="file" id="fileInput" style="display: none;">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderName" autocomplete="off" class="layui-input"
+                               placeholder="请输入寄件人姓名"
+                               required lay-verify="required|senderName">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderPhone" autocomplete="off" class="layui-input"
+                               placeholder="请输入寄件人手机号"
+                               required lay-verify="required|phone">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="senderAddress" autocomplete="off" class="layui-input"
+                           placeholder="请输入发货地址"
+                           required lay-verify="required|senderAddress">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverName" autocomplete="off" class="layui-input"
+                               placeholder="请输入收件人姓名"
+                               required lay-verify="required|receiverName">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverPhone" autocomplete="off" class="layui-input"
+                               placeholder="请输入收件人手机号"
+                               required lay-verify="required|phone">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">收货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="receiverAddress" autocomplete="off" class="layui-input"
+                           placeholder="请输入发货地址"
+                           required lay-verify="required|senderAddress">
+                </div>
+            </div>
+            <input name="status" value="0" type="hidden">
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="addInExpressSubmit"
+                        style="width: 120px;">确认添加
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeAddInExpressModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="detail-inExpress-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="detailInExpressForm">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">快递公司</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="companyName" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status" lay-search disabled>
+                            <option value="0">已入库</option>
+                            <option value="1">正在配送</option>
+                            <option value="2">已取件</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">配送员姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="deliverymanName" placeholder="暂未开始配送" autocomplete="off"
+                               class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">配送员手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="deliverymanPhone" placeholder="暂未开始配送" autocomplete="off"
+                               class="layui-input" disabled>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">图片</label>
+                    <div class="layui-input-inline">
+                        <div class="layui-upload" style="text-align: center;">
+                            <div class="layui-form-mid layui-word-aux" id="expressImg"
+                                 style="text-align: center; width: 100%"></div> <!-- 显示图片 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderName" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderPhone" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="senderAddress" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverName" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverPhone" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">收货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="receiverAddress" autocomplete="off" class="layui-input" disabled>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">入库时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="createTime" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">修改时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="updateTime" autocomplete="off" class="layui-input" disabled>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="send-inExpress-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="sendInExpressForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">配送员</label>
+                <div class="layui-input-inline">
+                    <select name="deliverymanId" lay-verify="required" lay-search>
+                        <option value="">请选择配送员</option>
+                        <option th:each="deliveryman:${deliverymanList}" th:value="${deliveryman.id}"
+                                th:text="${deliveryman.name}"></option>
+                    </select>
+                </div>
+
+            </div>
+            <input name="status" value="1" type="hidden">
+            <input name="id" type="hidden">
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="sendInExpressSubmit"
+                        style="width: 120px;">开始配送
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeSendInExpressModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="modifyStatus-inExpress-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="modifyStatusInExpressForm">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">配送员</label>
+                    <div class="layui-input-inline">
+                        <select name="deliverymanId" lay-search>
+                            <option value="">请选择配送员</option>
+                            <option th:each="deliveryman:${deliverymanList}" th:value="${deliveryman.id}"
+                                    th:text="${deliveryman.name}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status" lay-search>
+                            <option value="0">已入库</option>
+                            <option value="1">正在配送</option>
+                            <option value="2">已取件</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <input name="id" type="hidden">
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit
+                        lay-filter="modifyStatusInExpressSubmit"
+                        style="width: 120px;">修改
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModifyStatusInExpressModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="modify-inExpress-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="modifyInExpressForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">快递公司</label>
+                <div class="layui-input-inline">
+                    <select name="companyId" lay-verify="required" lay-search>
+                        <option value="">请选择快递公司</option>
+                        <option th:each="company:${expressCompanyList}" th:value="${company.id}"
+                                th:text="${company.name}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">图片</label>
+                    <div class="layui-input-inline">
+                        <div class="layui-upload" style="text-align: center;">
+                            <div class="layui-form-mid layui-word-aux" id="modifyExpressImg"
+                                 style="text-align: center; width: 100%"></div> <!-- 显示图片 -->
+                            <div>
+                                <button type="button" class="layui-btn" id="modifyChooseImage">选择图片</button>
+                                <input type="file" name="file" id="modifyFileInput" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderName" autocomplete="off" class="layui-input"
+                               placeholder="请输入寄件人姓名"
+                               required lay-verify="required|senderName">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">寄件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="senderPhone" autocomplete="off" class="layui-input"
+                               placeholder="请输入寄件人手机号"
+                               required lay-verify="required|phone">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="senderAddress" autocomplete="off" class="layui-input"
+                           placeholder="请输入发货地址"
+                           required lay-verify="required|senderAddress">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverName" autocomplete="off" class="layui-input"
+                               placeholder="请输入收件人姓名"
+                               required lay-verify="required|receiverName">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">收件人手机</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="receiverPhone" autocomplete="off" class="layui-input"
+                               placeholder="请输入收件人手机号"
+                               required lay-verify="required|phone">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">收货地址</label>
+                <div class="layui-input-block">
+                    <input type="text" name="receiverAddress" autocomplete="off" class="layui-input"
+                           placeholder="请输入发货地址"
+                           required lay-verify="required|senderAddress">
+                </div>
+            </div>
+            <input name="id" type="hidden">
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="modifyInExpressSubmit"
+                        style="width: 120px;">确认修改
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModifyInExpressModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    layui.use(function () {
+        var layer = layui.layer;
+        var $ = layui.$;
+        var laypage = layui.laypage;
+        let form = layui.form;
+        var upload = layui.upload;
+
+
+        $(document).on('click', '.modifyStatusBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: '/backend/inExpress/getInExpress',
+                data: {
+                    id: id
+                },
+                type: 'Post',
+                dataType: 'json',
+                success: function (data) {
+                        if (data.flag) {
+                            let express = data.data;
+                            form.val('modifyStatusInExpressForm', {
+                                "id": express.id,
+                                "status": express.status,
+                                "deliverymanId": express.deliverymanId
+                            });
+                            layer.open({
+                                type: 1,
+                                title: '修改快递信息',
+                                area: ['400px', '300px'],
+                                content: $('#modifyStatus-inExpress-modal'),
+                                success: function () {
+                                    form.on('submit(modifyStatusInExpressSubmit)', function (data) {
+                                        var field = data.field; // 获取表单字段值
+                                        if (field.status == "0" && field.deliverymanId != '') {
+                                            layer.msg("快递状态为已入库时配送员应为空", {icon: 5, anim: 6})
+                                            return false;
+                                        }
+                                        if ((field.status == "1" || field.status == "2") && field.deliverymanId == '') {
+                                            layer.msg("快递状态不是已入库时配送员不能为空", {icon: 5, anim: 6})
+                                            return false;
+                                        }
+                                        $.ajax({
+                                            url: '/backend/inExpress/modifyInExpressStatus',
+                                            data: field,
+                                            type: 'post',
+                                            dataType: 'json',
+                                            success: function (data) {
+                                                if (data.flag) {
+                                                    layer.msg(data.message, {icon: 6, anim: 0})
+                                                    closeModal()
+                                                    let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                                    let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                                    queryForPage(pageNo, pageSize);
+                                                } else {
+                                                    layer.msg(data.message, {icon: 5, anim: 6})
+                                                }
+                                            }
+                                        })
+                                        modifyFormData = new FormData();
+                                        return false; // 阻止默认 form 跳转
+                                    });
+                                    $("#closeModifyStatusInExpressModal").on("click", function () {
+                                        closeModal()
+                                    })
+
+
+                                }
+                            });
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+            })
+        })
+
+        //修改快递信息
+        $(document).on('click', '.modifyBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: '/backend/inExpress/getInExpress',
+                data: {
+                    id: id
+                },
+                type: 'Post',
+                dataType: 'json',
+                success: function (data) {
+                        if (data.flag) {
+                            let express = data.data;
+                            form.val('modifyInExpressForm', {
+                                "id": express.id,
+                                "senderName": express.senderName,
+                                "senderPhone": express.senderPhone,
+                                "senderAddress": express.senderAddress,
+                                "receiverName": express.receiverName,
+                                "receiverPhone": express.receiverPhone,
+                                "receiverAddress": express.receiverAddress,
+                                "companyId": express.companyId,
+
+                            });
+                            $('#modifyExpressImg').html('<img src="' + express.img + '" style="max-width: 100%; max-height: 100%;">');
+                            layer.open({
+                                type: 1,
+                                title: '修改快递信息',
+                                area: ['730px', '600px'],
+                                content: $('#modify-inExpress-modal'),
+                                success: function () {
+                                    //创建添加的formData对象
+                                    var modifyFormData = new FormData();
+                                    // 选择图片
+                                    $('#modifyChooseImage').on('click', function () {
+                                        $('#modifyFileInput').click();
+                                    });
+                                    // 选择图片后显示预览图，并进行文件类型和大小的验证
+                                    upload.render({
+                                        elem: '#modifyFileInput',
+                                        accept: 'images', // 只允许上传图片文件
+                                        exts: 'jpg|png|gif|bmp|jpeg', // 接受的文件类型
+                                        size: 2048, // 文件大小限制，单位 KB
+                                        before: function (obj) {
+                                            if (!obj.files || obj.files.length === 0) {
+                                                return false;
+                                            }
+                                            return true;
+                                        },
+                                        choose: function (obj) {
+                                            obj.preview(function (index, file, result) {
+                                                if (file.size > 2048 * 1024) { // 将文件大小转换为 KB 进行比较
+                                                    layer.msg('文件大小不能超过 2MB');
+                                                    return false; // 阻止文件添加
+                                                }
+                                                modifyFormData.append('file', file);
+                                                $('#modifyExpressImg').html('<img src="' + result + '" alt="预览图" style="max-width: 100%; max-height: 100%;">');
+                                            });
+                                        }
+                                    });
+
+                                    form.on('submit(modifyInExpressSubmit)', function (data) {
+                                        var field = data.field; // 获取表单字段值
+                                        modifyFormData.append("id", field.id);
+                                        modifyFormData.append("companyId", field.companyId);
+                                        modifyFormData.append("senderName", field.senderName);
+                                        modifyFormData.append("senderPhone", field.senderPhone);
+                                        modifyFormData.append("senderAddress", field.senderAddress);
+                                        modifyFormData.append("receiverName", field.receiverName);
+                                        modifyFormData.append("receiverPhone", field.receiverPhone);
+                                        modifyFormData.append("receiverAddress", field.receiverAddress);
+                                        $.ajax({
+                                            url: '/backend/inExpress/modifyInExpress',
+                                            data: modifyFormData,
+                                            processData: false, // 告诉 jQuery 不要处理数据
+                                            contentType: false, // 告诉 jQuery 不要设置请求头
+                                            type: 'post',
+                                            dataType: 'json',
+                                            success: function (data) {
+                                                if (data.flag) {
+                                                    layer.msg(data.message, {icon: 6, anim: 0})
+                                                    closeModal()
+                                                    let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                                    let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                                    queryForPage(pageNo, pageSize);
+                                                } else {
+                                                    layer.msg(data.message, {icon: 5, anim: 6})
+                                                }
+                                            }
+                                        })
+                                        modifyFormData = new FormData();
+                                        return false; // 阻止默认 form 跳转
+                                    });
+                                    $("#closeModifyInExpressModal").on("click", function () {
+                                        closeModal()
+                                    })
+
+
+                                }
+                            });
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                }
+            })
+        })
+
+        //配送快递
+        $(document).on('click', '.sendBtn', function () {
+            let id = $(this).attr("id")
+            form.val("sendInExpressForm", {
+                "id": id
+            })
+            layer.open({
+                type: 1,
+                title: '新增快递公司',
+                area: ['400px', '300px'],
+                content: $('#send-inExpress-modal'),
+                success: function () {
+                    form.on('submit(sendInExpressSubmit)', function (data) {
+                        var field = data.field; // 获取表单字段值
+
+                        $.ajax({
+                            url: '/backend/inExpress/sendInExpress',
+                            data: field,
+                            type: 'Post',
+                            dataType: 'json',
+                            success: function (data) {
+                                    if (data.flag) {
+                                        layer.msg(data.message, {icon: 6, anim: 0});
+                                        let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                        let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                        queryForPage(pageNo, pageSize)
+                                        closeModal()
+                                    } else {
+                                        layer.msg(data.message, {icon: 5, anim: 6});
+                                    }
+                            }
+                        })
+                        return false; // 阻止默认 form 跳转
+                    });
+
+                    $("#closeSendInExpressModal").on("click", function () {
+                        closeModal()
+                    })
+                }
+            });
+        });
+
+        //删除快递
+        $(document).on('click', '.deleteBtn', function () {
+            let id = $(this).attr("id")
+            layer.confirm('确认删除吗?', {icon: 3}, function () {
+                $.ajax({
+                    url: '/backend/inExpress/deleteInExpress',
+                    data: {
+                        id: id
+                    },
+                    type: 'Post',
+                    dataType: 'json',
+                    success: function (data) {
+                            if (data.flag) {
+                                layer.msg(data.message, {icon: 6, anim: 0});
+                                let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                if (pageNo > 1) {
+                                    queryForPage(pageNo, pageSize);
+                                } else {
+                                    if ($('.layui-table tbody tr').length === 1) {
+                                        pageNo--;
+                                    }
+                                    if (pageNo > 0) {
+                                        queryForPage(pageNo, pageSize);
+                                    }
+                                }
+                            } else {
+                                layer.msg(data.message, {icon: 5, anim: 6});
+                            }
+                        }
+                })
+            }, function () {
+            });
+        });
+
+        //查看详情
+        $(document).on('click', '.detailBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: '/backend/inExpress/detailInExpress',
+                data: {
+                    id: id
+                },
+                type: 'Post',
+                dataType: 'json',
+                success: function (data) {
+
+                        if (data.flag) {
+                            let express = data.data;
+                            form.val('detailInExpressForm', {
+                                "senderName": express.senderName,
+                                "senderPhone": express.senderPhone,
+                                "senderAddress": express.senderAddress,
+                                "receiverName": express.receiverName,
+                                "receiverPhone": express.receiverPhone,
+                                "receiverAddress": express.receiverAddress,
+                                "status": express.status,
+                                "createTime": express.createTime,
+                                "updateTime": express.updateTime,
+                                "companyName": express.companyName,
+                                "deliverymanName": express.deliverymanName,
+                                "deliverymanPhone": express.deliverymanPhone
+                            });
+                            $('#expressImg').html('<img src="' + express.img + '" style="max-width: 100%; max-height: 100%;">');
+                            layer.open({
+                                type: 1,
+                                title: '快递详情',
+                                area: ['730px', '600px'],
+                                content: $('#detail-inExpress-modal')
+                            });
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+
+            })
+        })
+
+        //添加功能
+        $("#addInExpress").on("click", function () {
+            form.val('addInExpressForm', {
+                'companyId': '',
+                'senderName': '',
+                'senderPhone': '',
+                'senderAddress': '',
+                'receiverName': '',
+                'receiverPhone': '',
+                'receiverAddress': ''
+            });
+            $("#fileInput").val("");
+
+            layer.open({
+                type: 1,
+                title: '新增快递',
+                area: ['800px', '600px'],
+                content: $('#add-inExpress-modal'),
+                success: function () {
+                    //创建添加的formData对象
+                    var addFormData = new FormData();
+                    // 选择图片
+                    $('#chooseImage').on('click', function () {
+                        $('#fileInput').click();
+                    });
+
+                    // 选择图片后显示预览图，并进行文件类型和大小的验证
+                    upload.render({
+                        elem: '#fileInput',
+                        accept: 'images', // 只允许上传图片文件
+                        exts: 'jpg|png|gif|bmp|jpeg', // 接受的文件类型
+                        size: 2048, // 文件大小限制，单位 KB
+                        before: function (obj) {
+                            if (!obj.files || obj.files.length === 0) {
+                                return false;
+                            }
+                            return true;
+                        },
+                        choose: function (obj) {
+                            obj.preview(function (index, file, result) {
+                                if (file.size > 2048 * 1024) { // 将文件大小转换为 KB 进行比较
+                                    layer.msg('文件大小不能超过 2MB');
+                                    return false; // 阻止文件添加
+                                }
+                                addFormData.append('file', file);
+                                $('#selectedFilePreview').html('<img src="' + result + '" alt="预览图" style="max-width: 100%; max-height: 100%;">');
+                            });
+                        }
+                    });
+
+                    // 提交事件
+                    form.on('submit(addInExpressSubmit)', function (data) {
+                        if (addFormData.get("file") == null) {
+                            layer.msg("请上传图片", {icon: 5, anim: 6});
+                            return;
+                        }
+                        var field = data.field; // 获取表单字段值
+                        addFormData.append("companyId", field.companyId);
+                        addFormData.append("senderName", field.senderName);
+                        addFormData.append("senderPhone", field.senderPhone);
+                        addFormData.append("senderAddress", field.senderAddress);
+                        addFormData.append("receiverName", field.receiverName);
+                        addFormData.append("receiverPhone", field.receiverPhone);
+                        addFormData.append("receiverAddress", field.receiverAddress);
+                        addFormData.append("status", field.status);
+                        $.ajax({
+                            url: '/backend/inExpress/addInExpress',
+                            data: addFormData,
+                            processData: false, // 告诉 jQuery 不要处理数据
+                            contentType: false, // 告诉 jQuery 不要设置请求头
+                            type: 'post',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.flag) {
+                                    layer.msg(data.message, {icon: 6, anim: 0})
+                                    closeModal()
+                                    queryForPage(1, 10);
+                                } else {
+                                    layer.msg(data.message, {icon: 5, anim: 6})
+                                }
+                            }
+                        })
+                        addFormData = new FormData();
+                        return false; // 阻止默认 form 跳转
+                    });
+                    $("#closeAddInExpressModal").on("click", function () {
+                        closeModal()
+                    })
+                }
+            });
+        })
+
+        //查询
+        $("#queryBtn").on("click", function () {
+            queryForPage(1, 10)
+        })
+
+        queryForPage(1, 10);
+
+        function queryForPage(pageNo, pageSize) {
+            let sender = $("#querySender").val();
+            let receiver = $("#queryReceiver").val();
+            let status = $("#queryStatus").val();
+            $.ajax({
+                url: '/backend/inExpress/queryInExpressPage',
+                data: {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                    sender: sender,
+                    receiver: receiver,
+                    status: status
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var htmlStr = "";
+                    $.each(data.rows, function (index, express) {
+                        let status = "";
+                        if (express.status == 0) {
+                            status = "已入库"
+                        } else if (express.status == 1) {
+                            status = "正在配送"
+                        } else {
+                            status = "已取件"
+                        }
+                        htmlStr += "<tr>" +
+                            "<td>" + (index + 1) + "</td>" +
+                            "            <td ><img src=" + express.img + "></td>" +
+                            "            <td >" + express.companyName + "</td>" +
+                            "            <td >" + express.senderName + "</td>" +
+                            "            <td >" + express.senderPhone + "</td>" +
+                            "            <td >" + express.receiverName + "</td>" +
+                            "            <td >" + express.receiverPhone + "</td>" +
+                            "            <td >" + status + "</td>" +
+                            "            <td ><button type='button' id='" + express.id + "' class='detailBtn layui-btn'>详情</button>"
+
+
+                        if (express.status == 0) {
+                            htmlStr += "<button type='button' id='" + express.id + "' class='modifyBtn layui-btn layui-bg-blue'>修改</button>" +
+                                "<button type='button' id='" + express.id + "' class='sendBtn layui-btn layui-bg-blue'>配送</button>" +
+                                "<button type='button' id='" + express.id + "' class='deleteBtn layui-btn layui-bg-red'>删除</button></td> "
+                        } else {
+                            htmlStr += "<button type='button' id='" + express.id + "' class='modifyStatusBtn layui-btn layui-bg-blue'>修改状态/配送员</button>" +
+                                "<button type='button' id='" + express.id + "' class='deleteBtn layui-btn layui-bg-red'>删除</button></td> "
+                        }
+                    });
+                    $("#tBody").html(htmlStr)
+
+                    laypage.render({
+                        elem: 'page',
+                        count: data.total,
+                        limit: pageSize,
+                        curr: pageNo,
+                        layout: ['count', 'prev', 'page', 'next', 'limit'], // 功能布局
+                        jump: function (obj, first) {
+                            if (!first) {
+                                pageNo = obj.curr;
+                                pageSize = obj.limit;
+                                queryForPage(pageNo, pageSize); // 分页改变时重新查询并保持在当前页面
+                            }
+                        }
+                    })
+                }
+            })
+
+        }
+
+        // 关闭模态窗口
+        closeModal = function () {
+            layer.closeAll('page');
+        }
+    })
+</script>
+
+</body>
+
+</html>

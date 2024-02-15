@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.UserMapper">
+    <update id="updateUser">
+        update user
+        <set>
+            <trim suffixOverrides=",">
+                <if test="username != null and username != ''">username = #{username},</if>
+                <if test="password != null and password != ''">password = #{password},</if>
+                <if test="realname != null and realname != ''">realname = #{realname},</if>
+                <if test="phone != null and phone != ''">phone = #{phone},</if>
+                <if test="address != null and address != ''">address = #{address},</if>
+                <if test="type != null">type = #{type},</if>
+                <if test="avatar != null and avatar != ''">avatar = #{avatar},</if>
+                <if test="updateTime != null">update_time = #{updateTime},</if>
+            </trim>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteUserById">
+        delete from user where id =#{id}
+    </delete>
+
+    <select id="selectUserByUsername" resultType="com.zb.express.pojo.User">
+        select *
+        from user
+        where username = #{username}
+    </select>
+
+</mapper>

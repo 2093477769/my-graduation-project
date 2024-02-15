@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.backend.mapper.DeliverymanMapper">
+    <insert id="insertDeliveryman">
+        insert into deliveryman(name, gender, age, phone, status, create_time)
+        values (#{name}, #{gender}, #{age}, #{phone}, #{status}, #{createTime})
+    </insert>
+    <update id="updateDeliveryman">
+        UPDATE deliveryman
+        <set>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="gender != null ">gender = #{gender},</if>
+            <if test="age != null and age != ''">age = #{age},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateTime != null and updateTime != ''">update_time = #{updateTime}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteDeliverymanById">
+        delete from deliveryman where id=#{id}
+    </delete>
+
+    <select id="selectDeliverymanForPage" resultType="com.zb.express.pojo.Deliveryman">
+        SELECT id, name, gender, age, phone, status, create_time, update_time
+        FROM deliveryman
+        <where>
+            <if test="name != null and name != ''">
+                AND name like concat('%', #{name}, '%')
+            </if>
+            <if test="gender != null and gender!=''">
+                AND gender = #{gender}
+            </if>
+            <if test="minAge != null and minAge!=''">
+                AND age &gt; #{minAge}
+            </if>
+            <if test="maxAge != null and maxAge!=''">
+                AND age &lt; #{maxAge}
+            </if>
+            <if test="status != null and status!=''">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+
+    </select>
+    <select id="selectDeliverymanById" resultType="com.zb.express.pojo.Deliveryman">
+        select * from deliveryman where id=#{id}
+    </select>
+    <select id="selectDeliverymanByStatus" resultType="com.zb.express.pojo.Deliveryman">
+        select id, name from deliveryman where status=1
+    </select>
+
+</mapper>

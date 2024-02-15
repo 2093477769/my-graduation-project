@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Demo</title>
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet">
+    <script th:src="@{/layui/layui.js}"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .layui-table td, .layui-table th {
+            text-align: center;
+        }
+
+        /* 输入框样式 */
+        .input {
+            height: 32px;
+            line-height: 32px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        /* 下拉菜单样式 */
+        select {
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* 按钮样式 */
+        .layui-btn {
+            height: 34px;
+            line-height: 34px;
+            margin-left: 10px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .title-border {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+
+<h1>配送员管理</h1>
+
+<div class="layui-row layui-col-space20" style="width: 80%; margin: 0 auto;">
+    <div class="title-border">
+        <input type="text" id="queryName" class="input" placeholder="请输入姓名">
+        <input type="text" id="queryMinAge" class="input" placeholder="请输入最小年龄/最小为18">
+        <input type="text" id="queryMaxAge" class="input" placeholder="请输入最大年龄/最大为50">
+        <select id="queryGender" lay-search>
+            <option value="">性别</option>
+            <option value="1">男</option>
+            <option value="0">女</option>
+        </select>
+        <select id="queryStatus" lay-search>
+            <option value="">状态</option>
+            <option value="1">在职</option>
+            <option value="0">已离职</option>
+        </select>
+        <button type="button" id="queryBtn" class="layui-btn layui-bg-blue">查询</button>
+    </div>
+
+    <button type="button" id="addDeliveryman" class="layui-btn">新增配送员</button>
+    <table class="layui-table">
+        <colgroup>
+            <col width="10%">
+            <col width="10%">
+            <col width="10%">
+            <col width="10%">
+            <col width="20%">
+            <col width="15%">
+            <col width="25%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>姓名</th>
+            <th>性别</th>
+            <th>年龄</th>
+            <th>手机号</th>
+            <th>工作状态</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="tBody">
+        </tbody>
+    </table>
+    <div id="page"></div>
+</div>
+
+<div id="add-deliveryman-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="addDeliverymanForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">姓名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="请输入配送员姓名"
+                           required lay-verify="required|deliverymanName">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">性别</label>
+                    <div class="layui-input-inline">
+                        <select name="gender" lay-verify="required" lay-search>
+                            <option value="">性别</option>
+                            <option value="1">男</option>
+                            <option value="0">女</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-block">
+                    <input type="text" name="age" autocomplete="off" class="layui-input" placeholder="请输入年龄"
+                           required lay-verify="required|deliverymanAge">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">手机号</label>
+                <div class="layui-input-block">
+                    <input type="text" name="phone" autocomplete="off" class="layui-input" placeholder="请输入手机号"
+                           required lay-verify="required|phone">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status" lay-verify="required" lay-search>
+                            <option value="">状态</option>
+                            <option value="1">在职</option>
+                            <option value="0">已离职</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="addDeliverymanSubmit"
+                        style="width: 120px;">确认添加
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeAddDeliverymanModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modify-deliveryman-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="modifyDeliverymanForm">
+            <input type="text" name="id" hidden>
+            <div class="layui-form-item">
+                <label class="layui-form-label">姓名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="请输入配送员姓名"
+                           required lay-verify="required|deliverymanName">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">性别</label>
+                    <div class="layui-input-inline">
+                        <select name="gender" lay-verify="required" lay-search>
+                            <option value="">性别</option>
+                            <option value="1">男</option>
+                            <option value="0">女</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">年龄</label>
+                <div class="layui-input-block">
+                    <input type="text" name="age" autocomplete="off" class="layui-input" placeholder="请输入年龄"
+                           required lay-verify="required|deliverymanAge">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">手机号</label>
+                <div class="layui-input-block">
+                    <input type="text" name="phone" autocomplete="off" class="layui-input" placeholder="请输入手机号"
+                           required lay-verify="required|phone">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status" lay-verify="required" lay-search>
+                            <option value="">状态</option>
+                            <option value="1">在职</option>
+                            <option value="0">已离职</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="modifyDeliverymanSubmit"
+                        style="width: 120px;">确认修改
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModifyDeliverymanModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    layui.use(function () {
+        var layer = layui.layer;
+        var $ = layui.$;
+        var laypage = layui.laypage;
+        let form = layui.form;
+
+        //删除功能
+        $(document).on('click', '.deleteBtn', function () {
+            let id = $(this).attr("id")
+            layer.confirm('确认删除吗?', {icon: 3}, function () {
+                $.ajax({
+                    url: '/backend/deliveryman/deleteDeliverymanById',
+                    data: {id: id},
+                    type: 'post',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.flag) {
+                            layer.msg(data.message, {icon: 6, anim: 0});
+                            let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                            let pageSize = $('.layui-laypage-limits select option:selected').val();
+                            if (pageNo > 1) {
+                                queryForPage(pageNo, pageSize);
+                            } else {
+                                if ($('.layui-table tbody tr').length === 1) {
+                                    pageNo--;
+                                }
+                                if (pageNo > 0) {
+                                    queryForPage(pageNo, pageSize);
+                                }
+                            }
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+                });
+            }, function () {
+            });
+        })
+
+        //添加功能
+        $("#addDeliveryman").on('click', function () {
+            form.val('addDeliverymanForm', {
+                'name': '',
+                'gender': '',
+                'status': '',
+                'age': '',
+                'phone': ''
+            });
+            layer.open({
+                type: 1,
+                title: '新增配送员',
+                area: ['400px', '470px'],
+                content: $('#add-deliveryman-modal'),
+                success: function () {
+                    form.verify({
+                        deliverymanAge: function (value, item) {
+                            if (!/^(1[89]|[2-4]\d|50)$/.test(value)) {
+                                return "年龄必须是大于18小于50的整数"
+                            }
+                        }
+                    })
+
+                    form.on('submit(addDeliverymanSubmit)', function (data) {
+                        $.ajax({
+                            url: '/backend/deliveryman/addDeliveryman',
+                            data: data.field,
+                            type: 'post',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.flag) {
+                                    layer.msg(data.message, {icon: 6, anim: 0});
+                                    queryForPage(1, 10)
+                                    closeModal();
+                                } else {
+                                    layer.msg(data.message, {icon: 5, anim: 6});
+                                }
+                            }
+                        })
+                    })
+
+                    $("#closeAddDeliverymanModal").on('click', function () {
+                        closeModal()
+                    })
+                }
+            });
+        })
+
+
+        //修改功能
+        $(document).on('click', '.modifyBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: "/backend/deliveryman/queryDeliverymanById",
+                data: {id: id},
+                type: 'post',
+                dataType: 'json',
+                success: function (data) {
+                    if (data.flag) {
+                        let deliveryman = data.data;
+                        form.val('modifyDeliverymanForm', {
+                            'id': deliveryman.id,
+                            'name': deliveryman.name,
+                            'gender': deliveryman.gender,
+                            'status': deliveryman.status,
+                            'age': deliveryman.age,
+                            'phone': deliveryman.phone
+                        });
+                        layer.open({
+                            type: 1,
+                            title: '修改配送员',
+                            area: ['400px', '470px'],
+                            content: $('#modify-deliveryman-modal'),
+                            success: function () {
+                                form.on('submit(modifyDeliverymanSubmit)', function (data) {
+                                    $.ajax({
+                                        url: '/backend/deliveryman/modifyDeliveryman',
+                                        data: data.field,
+                                        type: 'post',
+                                        dataType: 'json',
+                                        success: function (data) {
+                                            if (data.flag) {
+                                                layer.msg(data.message, {icon: 6, anim: 0});
+                                                let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                                let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                                queryForPage(pageNo, pageSize);
+                                                closeModal();
+                                            } else {
+                                                layer.msg(data.message, {icon: 5, anim: 6});
+                                            }
+                                        }
+                                    })
+                                })
+
+                                $("#closeModifyDeliverymanModal").on('click', function () {
+                                    closeModal()
+                                })
+                            }
+                        });
+                    } else {
+                        layer.msg(data.message, {icon: 5, anim: 6});
+                    }
+                }
+            })
+        })
+
+        $("#queryBtn").on('click', function () {
+            queryForPage(1, 10)
+        })
+
+        queryForPage(1, 10);
+
+        function queryForPage(pageNo, pageSize) {
+            let name = $("#queryName").val();
+            let minAge = $("#queryMinAge").val();
+            let maxAge = $("#queryMaxAge").val();
+            let gender = $("#queryGender").val();
+            let status = $("#queryStatus").val();
+            if (minAge != null && minAge != '' && !/^(1[89]|[2-4]\d|50)$/.test(minAge)) {
+                layer.msg("最小年龄应为大于等于18小于等于50的正整数", {icon: 5, anim: 6});
+                return;
+            }
+            if (maxAge != null && maxAge != '' && !/^(1[89]|[2-4]\d|50)$/.test(maxAge)) {
+                layer.msg("最大年龄应为大于等于18小于等于50的正整数", {icon: 5, anim: 6});
+                return;
+            }
+            if (minAge != null && minAge != '' && maxAge != null && maxAge != '' && maxAge < minAge) {
+                layer.msg("最大年龄应大于最小年龄", {icon: 5, anim: 6});
+                return;
+            }
+            $.ajax({
+                url: '/backend/deliveryman/queryDeliverymanForPage',
+                data: {
+                    pageNo: pageNo,
+                    pageSize: pageSize,
+                    name: name,
+                    minAge: minAge,
+                    maxAge: maxAge,
+                    gender: gender,
+                    status: status
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var htmlStr = "";
+                    $.each(data.rows, function (index, deliveryman) {
+                        if (deliveryman.gender == 0) {
+                            deliveryman.gender = '女'
+                        } else {
+                            deliveryman.gender = '男'
+                        }
+                        if (deliveryman.status == 1) {
+                            deliveryman.status = '在职'
+                        } else {
+                            deliveryman.status = '已离职'
+                        }
+                        htmlStr += "<tr>" +
+                            "<td>" + (index + 1) + "</td>" +
+                            "            <td >" + deliveryman.name + "</td>" +
+                            "            <td >" + deliveryman.gender + "</td>" +
+                            "            <td >" + deliveryman.age + "</td>" +
+                            "            <td >" + deliveryman.phone + "</td>" +
+                            "            <td >" + deliveryman.status + "</td>" +
+                            "            <td ><button type='button' id='" + deliveryman.id + "' class='modifyBtn layui-btn layui-bg-blue'>修改</button>" +
+                            "<button type='button' id='" + deliveryman.id + "' class='deleteBtn layui-btn layui-bg-red'>删除</button> " +
+                            "        </tr>";
+                    });
+                    $("#tBody").html(htmlStr)
+
+                    laypage.render({
+                        elem: 'page',
+                        count: data.total,
+                        limit: pageSize,
+                        curr: pageNo,
+                        layout: ['count', 'prev', 'page', 'next', 'limit'], // 功能布局
+                        jump: function (obj, first) {
+                            if (!first) {
+                                pageNo = obj.curr;
+                                pageSize = obj.limit;
+                                queryForPage(pageNo, pageSize); // 分页改变时重新查询并保持在当前页面
+                            }
+                        }
+                    })
+                }
+            })
+        }
+
+        // 关闭模态窗口
+        closeModal = function () {
+            layer.closeAll('page');
+        }
+
+    })
+</script>
+</body>
+</html>

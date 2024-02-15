@@ -1,0 +1,39 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+  datasource:
+    url: jdbc:mysql://localhost:3306/graduation_project?serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    redis:
+      host: localhost
+      port: 6379
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:com/zb/express/**/mapper/*.xml
+
+upload:
+  path:
+    avatar: "src/main/resources/static/img/avatar"
+    inExpressImg: "src/main/resources/static/img/inExpressImg"
+    outExpressImg: "src/main/resources/static/img/outExpressImg"
+
+# 开启 PageHelper 自动化配置
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  # 可选配置，设置为 true 时，会检查当前环境是否存在合适的 SQL 解析器
+  auto-runtime-dialect: true

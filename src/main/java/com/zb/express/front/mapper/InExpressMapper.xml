@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.InExpressMapper">
+    <update id="updateInExpressStatusById">
+        update in_express
+        set status         = #{status}
+            <if test="deliverymanId!=null and deliverymanId!=''">
+                deliveryman_id = #{deliverymanId}
+            </if>
+        where id = #{id}
+    </update>
+    <select id="selectInExpressStatusById" resultType="java.lang.Integer">
+        select status from in_express where id=#{id}
+    </select>
+    <select id="selectInExpressPageToFront" resultType="java.util.Map">
+        select e.id as id, ec.name as companyName ,e.img as img , e.sender_name as senderName, e.sender_phone as
+        senderPhone,
+        e.receiver_name as receiverName, e.receiver_phone as receiverPhone, e.status as status
+        from in_express e
+        left join express_company ec on ec.id = e.company_id
+        <where>
+            <if test="sender != null and sender != ''">
+                AND e.sender_name like concat('%', #{sender}, '%') OR e.sender_phone like concat('%', #{sender}, '%')
+            </if>
+            AND e.receiver_phone=#{receiverPhone}
+            <if test="status != null and status != ''">
+                AND e.status = #{status}
+            </if>
+        </where>
+        ORDER BY e.create_time DESC
+    </select>
+</mapper>

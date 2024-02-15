@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.DeliverymanMapper">
+    <select id="selectDeliverymanByStatus" resultType="com.zb.express.pojo.Deliveryman">
+        select id, name from deliveryman where status=1
+    </select>
+
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.ExpressCompanyMapper">
+    <select id="selectAllCompany" resultType="com.zb.express.pojo.ExpressCompany">
+        select id, name, base_fee, weight_fee, create_time, update_time
+        from express_company
+        order by create_time desc
+
+    </select>
+    <select id="selectCompanyById" resultType="com.zb.express.pojo.ExpressCompany">
+        select *
+        from express_company
+        where id = #{companyId}
+    </select>
+
+</mapper>

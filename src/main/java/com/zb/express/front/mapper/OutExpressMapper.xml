@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zb.express.front.mapper.OutExpressMapper">
+    <insert id="insertOutExpress">
+        insert into out_express (company_id, img, weight,expense,sender_name, sender_phone, sender_address, receiver_name,
+                                receiver_phone, receiver_address, status, create_time)
+        values (#{companyId}, #{img},#{weight},#{expense}, #{senderName}, #{senderPhone}, #{senderAddress}, #{receiverName},
+                #{receiverPhone}, #{receiverAddress}, #{status}, #{createTime})
+    </insert>
+    <update id="updateOutExpress">
+        update out_express set company_id = #{companyId},
+        <if test="img!=null">img = #{img},</if>
+        weight=#{weight},
+        expense=#{expense},
+        sender_name = #{senderName},
+        sender_phone = #{senderPhone},
+        sender_address = #{senderAddress},
+        receiver_name = #{receiverName},
+        receiver_phone = #{receiverPhone},
+        receiver_address = #{receiverAddress},
+        create_time = #{createTime},
+        update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+    <delete id="deleteOutExpressById">
+        delete from out_express where id=#{id}
+    </delete>
+    <select id="selectOutExpressPage" resultType="java.util.Map">
+        select e.id as id, ec.name as companyName ,e.img as img , e.sender_name as senderName, e.sender_phone as
+        senderPhone,
+        e.receiver_name as receiverName, e.receiver_phone as receiverPhone, e.status as status
+        from out_express e
+        left join express_company ec on ec.id = e.company_id
+        where sender_phone=#{sendPhone}
+            <if test="receiver != null and receiver != ''">
+                AND e.receiver_name like concat('%', #{receiver}, '%') OR e.receiver_phone like concat('%', #{receiver},
+                '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND e.status = #{status}
+            </if>
+        ORDER BY e.create_time DESC
+    </select>
+    <select id="selectOutExpressById" resultType="java.util.Map">
+        select e.img              as img,
+               e.weight           as weight,
+               e.expense          as expense,
+               e.sender_name      as senderName,
+               e.sender_phone     as senderPhone,
+               e.sender_address   as senderAddress,
+               e.receiver_name    as receiverName,
+               e.receiver_phone   as receiverPhone,
+               e.receiver_address as receiverAddress,
+               e.status           as status,
+               e.create_time      as createTime,
+               e.update_time      as updateTime,
+               ec.name            as companyName,
+               d.name             as deliverymanName,
+               d.phone            as deliverymanPhone
+        from out_express e
+                 left join deliveryman d on d.id = e.deliveryman_id
+                 left join express_company ec on ec.id = e.company_id
+        where e.id = #{id}
+    </select>
+    <select id="selectOutExpress" resultType="com.zb.express.pojo.OutExpress">
+        select * from out_express where id=#{id}
+    </select>
+
+</mapper>

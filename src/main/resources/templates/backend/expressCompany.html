@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>Demo</title>
+    <link th:href="@{/layui/css/layui.css}" rel="stylesheet">
+    <script th:src="@{/layui/layui.js}"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-group {
+            margin-bottom: 20px;
+        }
+
+        .layui-table td, .layui-table th {
+            text-align: center;
+        }
+
+        /* 按钮样式 */
+        .layui-btn {
+            height: 34px;
+            line-height: 34px;
+            margin-left: 10px;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .title-border {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+<h1>快递公司管理</h1>
+<div class="layui-row layui-col-space20" style="width: 80%; margin: 0 auto;">
+    <div class="title-border"></div>
+    <button type="button" id="addCompany" class="layui-btn">新增快递公司</button>
+    <table class="layui-table">
+        <colgroup>
+            <col width="10%">
+            <col width="10%">
+            <col width="10%">
+            <col width="10%">
+            <col width="18%">
+            <col width="18%">
+            <col width="24%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>快递公司</th>
+            <th>初始价格 元/kg</th>
+            <th>超重单价 元/0.1kg</th>
+            <th>创建时间</th>
+            <th>修改时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="tBody">
+        </tbody>
+    </table>
+    <div id="page"></div>
+</div>
+
+<div id="modify-company-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="modifyCompanyForm">
+            <input type="text" name="id" hidden>
+            <div class="layui-form-item">
+                <label class="layui-form-label">公司名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="请输入公司名"
+                           required lay-verify="required|companyName">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">初始价格</label>
+                <div class="layui-input-block">
+                    <input type="text" name="baseFee" autocomplete="off" class="layui-input" placeholder="请输初始价格"
+                           required lay-verify="required|companyBaseFee">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">超重价格</label>
+                <div class="layui-input-block">
+                    <input type="text" name="weightFee" autocomplete="off" class="layui-input" placeholder="超重价格"
+                           required lay-verify="required|companyWeightFee">
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="modifyCompanySubmit"
+                        style="width: 120px;">确认修改
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeModifyCompanyModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="add-company-modal" class="layui-layer-wrap" style="display:none;">
+    <div style="padding: 30px">
+        <form class="layui-form" lay-filter="addCompanyForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">公司名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" autocomplete="off" class="layui-input" placeholder="请输入公司名"
+                           required lay-verify="required|companyName">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">初始价格</label>
+                <div class="layui-input-block">
+                    <input type="text" name="baseFee" autocomplete="off" class="layui-input" placeholder="请输初始价格"
+                           required lay-verify="required|companyBaseFee">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">超重价格</label>
+                <div class="layui-input-block">
+                    <input type="text" name="weightFee" autocomplete="off" class="layui-input" placeholder="超重价格"
+                           required lay-verify="required|companyWeightFee">
+                </div>
+            </div>
+            <div class="layui-form-item" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="layui-btn layui-btn-normal" lay-submit lay-filter="addCompanySubmit"
+                        style="width: 120px;">确认添加
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" id="closeAddCompanyModal"
+                        style="width: 120px;">取消
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    layui.use(function () {
+        var layer = layui.layer;
+        var $ = layui.$;
+        var laypage = layui.laypage;
+        let form = layui.form;
+
+
+        //删除功能
+        $(document).on('click', '.deleteBtn', function () {
+            let id = $(this).attr("id")
+            layer.confirm('确认删除吗?', {icon: 3}, function () {
+                $.ajax({
+                    url: '/backend/company/deleteCompanyById',
+                    data: {id: id},
+                    type: 'post',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.flag) {
+                            layer.msg(data.message, {icon: 6, anim: 0});
+                            let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                            let pageSize = $('.layui-laypage-limits select option:selected').val();
+                            if (pageNo > 1) {
+                                queryForPage(pageNo, pageSize);
+                            } else {
+                                if ($('.layui-table tbody tr').length === 1) {
+                                    pageNo--;
+                                }
+                                if (pageNo > 0) {
+                                    queryForPage(pageNo, pageSize);
+                                }
+                            }
+                        } else {
+                            layer.msg(data.message, {icon: 5, anim: 6});
+                        }
+                    }
+                });
+            }, function () {
+            });
+        })
+
+        //添加功能
+        $("#addCompany").on('click', function () {
+            form.val('addCompanyForm', {
+                'name': '',
+                'baseFee': '',
+                'weightFee': ''
+            });
+
+            layer.open({
+                type: 1,
+                title: '新增快递公司',
+                area: ['400px', '350px'],
+                content: $('#add-company-modal'),
+                success: function () {
+                    form.verify({
+                        companyBaseFee: function (value, item) {
+                            if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(value)) {
+                                return "初始价格应为两位小数"
+                            }
+                        },
+                        companyWeightFee: function (value, item) {
+                            if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(value)) {
+                                return "超重价格应为两位小数"
+                            }
+                        }
+                    })
+
+                    form.on('submit(addCompanySubmit)', function (data) {
+                        $.ajax({
+                            url: '/backend/company/addCompany',
+                            data: data.field,
+                            type: 'post',
+                            dataType: 'json',
+                            success: function (data) {
+                                if (data.flag) {
+                                    layer.msg(data.message, {icon: 6, anim: 0});
+                                    queryForPage(1, 10)
+                                    closeModal();
+                                } else {
+                                    layer.msg(data.message, {icon: 5, anim: 6});
+                                }
+                            }
+                        })
+                    })
+
+                    $("#closeAddCompanyModal").on('click', function () {
+                        closeModal()
+                    })
+                }
+            });
+        })
+
+
+        //修改功能
+        $(document).on('click', '.modifyBtn', function () {
+            let id = $(this).attr("id")
+            $.ajax({
+                url: "/backend/company/queryCompanyById",
+                data: {id: id},
+                type: 'post',
+                dataType: 'json',
+                success: function (data) {
+                    if (data.flag) {
+                        let company = data.data;
+                        form.val('modifyCompanyForm', {
+                            'id': company.id,
+                            'name': company.name,
+                            'baseFee': company.baseFee,
+                            'weightFee': company.weightFee
+                        })
+                        layer.open({
+                            type: 1,
+                            title: '修改快递公司',
+                            area: ['400px', '350px'],
+                            content: $('#modify-company-modal'),
+                            success: function () {
+                                form.on('submit(modifyCompanySubmit)', function (data) {
+                                    $.ajax({
+                                        url: '/backend/company/modifyCompany',
+                                        data: data.field,
+                                        type: 'post',
+                                        dataType: 'json',
+                                        success: function (data) {
+                                            if (data.flag) {
+                                                layer.msg(data.message, {icon: 6, anim: 0});
+                                                let pageNo = $('.layui-laypage-curr em:eq(1)').text();
+                                                let pageSize = $('.layui-laypage-limits select option:selected').val();
+                                                queryForPage(currentPage, pageSize);
+                                                closeModal();
+                                            } else {
+                                                layer.msg(data.message, {icon: 5, anim: 6});
+                                            }
+                                        }
+                                    })
+                                })
+
+                                $("#closeModifyCompanyModal").on('click', function () {
+                                    closeModal()
+                                })
+                            }
+                        });
+                    } else {
+                        layer.msg(data.message, {icon: 5, anim: 6});
+                    }
+                }
+            })
+        })
+
+
+        queryForPage(1, 10);
+
+        function queryForPage(pageNo, pageSize) {
+            $.ajax({
+                url: '/backend/company/getAllExpressCompany',
+                data: {
+                    pageNo: pageNo,
+                    pageSize: pageSize
+                },
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    var htmlStr = "";
+                    $.each(data.rows, function (index, company) {
+                        if (company.updateTime == null) {
+                            company.updateTime = '';
+                        }
+                        htmlStr += "<tr>" +
+                            "<td>" + (index + 1) + "</td>" +
+                            "            <td >" + company.name + "</td>" +
+                            "            <td >" + company.baseFee + "</td>" +
+                            "            <td >" + company.weightFee + "</td>" +
+                            "            <td >" + company.createTime + "</td>" +
+                            "            <td >" + company.updateTime + "</td>" +
+                            "            <td><button type='button' id='" + company.id + "' class='modifyBtn layui-btn layui-bg-blue'>修改</button>" +
+                            "    <button type='button' id='" + company.id + "' class='deleteBtn layui-btn layui-bg-red'>删除</button></td>" +
+                            "        </tr>";
+                    });
+                    $("#tBody").html(htmlStr)
+
+                    laypage.render({
+                        elem: 'page',
+                        count: data.total,
+                        limit: pageSize,
+                        curr: pageNo,
+                        layout: ['count', 'prev', 'page', 'next', 'limit'], // 功能布局
+                        jump: function (obj, first) {
+                            if (!first) {
+                                pageNo = obj.curr;
+                                pageSize = obj.limit;
+                                queryForPage(pageNo, pageSize); // 分页改变时重新查询并保持在当前页面
+                            }
+                        }
+                    })
+                }
+            })
+        }
+
+        // 关闭模态窗口
+        closeModal = function () {
+            layer.closeAll('page');
+        }
+    });
+</script>
+</body>
+</html>
